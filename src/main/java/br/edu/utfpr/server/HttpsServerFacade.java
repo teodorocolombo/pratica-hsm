@@ -1,25 +1,53 @@
 package br.edu.utfpr.server;
 
-import com.sun.net.httpserver.HttpServer;
+import com.sun.net.httpserver.HttpsConfigurator;
+import com.sun.net.httpserver.HttpsParameters;
+import com.sun.net.httpserver.HttpsServer;
 
+
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
+import java.io.FileInputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.security.KeyStore;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-public class HttpServerFacade {
+public class HttpsServerFacade {
 
-    private final HttpServer server;
+    private final HttpsServer server;
 
-    public HttpServerFacade(int port) {
+    public HttpsServerFacade(int port, String keystorePath, String keystorePassword) {
         try {
-            this.server = HttpServer.create(new InetSocketAddress(port), 0);
+            this.server = HttpsServer.create(new InetSocketAddress(port), 0);
+
+            KeyStore ks = KeyStore.getInstance("JKS");
+            try (FileInputStream fis = new FileInputStream(keystorePath)) {
+                ks.load(fis, keystorePassword.toCharArray());
+            }
+
+            KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
+            kmf.init(ks, keystorePassword.toCharArray());
+
+            SSLContext sslContext = SSLContext.getInstance("TLS");
+            sslContext.init(kmf.getKeyManagers(), null, null);
+
+            server.setHttpsConfigurator(new HttpsConfigurator(sslContext) {
+                @Override
+                public void configure(HttpsParameters params) {
+                    SSLParameters sslParameters = sslContext.getDefaultSSLParameters();
+                    params.setSSLParameters(sslParameters);
+                }
+            });
+
         } catch (Exception e) {
-            throw new RuntimeException("Failed to initialize HTTP server", e);
+            throw new RuntimeException("Failed to initialize HTTPS server", e);
         }
     }
 

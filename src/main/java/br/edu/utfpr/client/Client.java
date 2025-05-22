@@ -19,7 +19,6 @@ public class Client {
         SecretCommonsConfig secretCommonsConfig =
                 FileLoader.loadJsonFromConfig("secret-commons.json", SecretCommonsConfig.class);
 
-        HttpClientFacade httpClient = new HttpClientFacade();
         Dinamo dinamo = new Dinamo();
         dinamo.openSession(config.host(), config.user(), config.password());
         deleteKeysIfExists(dinamo, keyConfig);
@@ -36,6 +35,7 @@ public class Client {
 
 
         try {
+            HttpClientFacade httpClient = new HttpClientFacade(keyConfig.certificatePath());
             dinamo.createKey(keyConfig.firstKeyPairId(), TacNDJavaLib.ALG_ECC_SECP256K1);
             byte[] clientPubKey = dinamo.exportKey(keyConfig.firstKeyPairId(), TacNDJavaLib.PUBLICKEY_BLOB);
 

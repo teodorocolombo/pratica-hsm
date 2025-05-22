@@ -17,7 +17,9 @@ public class Server {
         SecretCommonsConfig secretCommonsConfig =
                 FileLoader.loadJsonFromConfig("secret-commons.json", SecretCommonsConfig.class);
 
-        HttpServerFacade server = new HttpServerFacade(serverConfig.port());
+        HttpsServerFacade server = new HttpsServerFacade(
+                serverConfig.port(), keyConfig.certificatePath(), keyConfig.certificatePassword());
+
         Dinamo dinamo = new Dinamo();
         dinamo.openSession(config.host(), config.user(), config.password());
         deleteKeysIfExists(dinamo, keyConfig);

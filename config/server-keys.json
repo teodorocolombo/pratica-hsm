@@ -1,5 +1,7 @@
 {
   "firstKeyPairId": "",
   "secondKeyPairId": "",
-  "sharedSecretKeyId": ""
+  "sharedSecretKeyId": "",
+  "certificatePath":  "",
+  "certificatePassword": ""
 }
