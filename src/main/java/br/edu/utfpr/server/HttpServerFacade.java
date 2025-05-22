@@ -1,4 +1,4 @@
-package br.edu.utfpr;
+package br.edu.utfpr.server;
 
 import com.sun.net.httpserver.HttpServer;
 
@@ -21,6 +21,28 @@ public class HttpServerFacade {
         } catch (Exception e) {
             throw new RuntimeException("Failed to initialize HTTP server", e);
         }
+    }
+
+    public void addGetHandler(String path, Supplier<byte[]> handler) {
+        server.createContext(path, exchange -> {
+            if (!"GET".equalsIgnoreCase(exchange.getRequestMethod())) {
+                exchange.sendResponseHeaders(405, -1);
+                return;
+            }
+
+            try {
+                byte[] responseBody = handler.get();
+
+                exchange.getResponseHeaders().add("Content-Type", "application/octet-stream");
+                exchange.sendResponseHeaders(200, responseBody.length);
+                try (OutputStream os = exchange.getResponseBody()) {
+                    os.write(responseBody);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                exchange.sendResponseHeaders(500, -1);
+            }
+        });
     }
 
     public void addPostHandler(String path, Function<byte[], byte[]> handler) {
@@ -46,37 +68,14 @@ public class HttpServerFacade {
         });
     }
 
-    public void addGetHandler(String path, Supplier<byte[]> handler) {
+    public void addPostHandler(String path, BiFunction<byte[], Map<String, String>, byte[]> handler) {
         server.createContext(path, exchange -> {
-            if (!"GET".equalsIgnoreCase(exchange.getRequestMethod())) {
+            if (!"POST".equalsIgnoreCase(exchange.getRequestMethod())) {
                 exchange.sendResponseHeaders(405, -1);
                 return;
             }
 
             try {
-                byte[] responseBody = handler.get();
-
-                exchange.getResponseHeaders().add("Content-Type", "application/octet-stream");
-                exchange.sendResponseHeaders(200, responseBody.length);
-                try (OutputStream os = exchange.getResponseBody()) {
-                    os.write(responseBody);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                exchange.sendResponseHeaders(500, -1);
-            }
-        });
-    }
-
-    public void addPostHandler(String path, BiFunction<byte[], Map<String, String>, byte[]> handler) {
-        server.createContext(path, exchange -> {
-            if (!"POST".equalsIgnoreCase(exchange.getRequestMethod())) {
-                exchange.sendResponseHeaders(405, -1); // Method Not Allowed
-                return;
-            }
-
-            try {
-                // Extract query parameters from the URL
                 URI requestURI = exchange.getRequestURI();
                 Map<String, String> queryParams = parseQueryParams(requestURI.getRawQuery());
 
@@ -90,7 +89,7 @@ public class HttpServerFacade {
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                exchange.sendResponseHeaders(500, -1); // Internal Server Error
+                exchange.sendResponseHeaders(500, -1);
             }
         });
     }

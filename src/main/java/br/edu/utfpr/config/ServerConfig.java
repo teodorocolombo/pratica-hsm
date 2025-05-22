@@ -1,4 +1,4 @@
-package br.edu.utfpr;
+package br.edu.utfpr.config;
 
 public record ServerConfig(String host,
                            int port) {

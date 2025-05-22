@@ -1,4 +1,4 @@
-package br.edu.utfpr;
+package br.edu.utfpr.client;
 
 import java.net.URI;
 import java.net.http.HttpClient;
